@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local/fd001/response.schema.json",
+  "title": "FD001 maintenance recommendation and audit record",
+  "type": "object",
+  "required": ["audit_record"],
+  "properties": {
+    "audit_record": {
+      "type": "object",
+      "required": [
+        "request_id",
+        "engine_id",
+        "timestamp_utc",
+        "point_prediction_cycles",
+        "interval_status",
+        "risk_category",
+        "automatically_proposed_action",
+        "final_approved_action",
+        "human_reviewed",
+        "review_is_simulated",
+        "model_name",
+        "rule_policy_version",
+        "workflow_version"
+      ],
+      "properties": {
+        "request_id": { "type": "string", "format": "uuid" },
+        "engine_id": { "type": ["integer", "null"] },
+        "time_in_cycles": { "type": ["integer", "null"] },
+        "timestamp_utc": { "type": "string", "format": "date-time" },
+        "reviewed_at_utc": { "type": ["string", "null"], "format": "date-time" },
+
+        "point_prediction_cycles": { "type": ["number", "null"] },
+        "interval_lower_cycles": { "type": ["number", "null"] },
+        "interval_upper_cycles": { "type": ["number", "null"] },
+        "interval_width_cycles": { "type": ["number", "null"] },
+        "interval_status": {
+          "type": "string",
+          "enum": ["CALIBRATED", "NOT_CALIBRATED"],
+          "description": "NOT_CALIBRATED until Phase 5 conformal calibration is complete and approved. Bounds are null in that state; they are never fabricated."
+        },
+        "confidence_level": { "type": ["number", "null"] },
+
+        "risk_category": {
+          "type": "string",
+          "enum": [
+            "routine_monitoring",
+            "plan_maintenance",
+            "urgent_human_review",
+            "data_quality_review",
+            "prediction_unavailable"
+          ]
+        },
+        "uncertainty_flag": { "type": "boolean" },
+        "top_explanation_drivers": { "type": "array", "items": { "type": "string" } },
+        "explanation_status": {
+          "type": "string",
+          "description": "PROVISIONAL until Phase 7. Global importance is not SHAP and is not row-specific or causal."
+        },
+
+        "automatically_proposed_action": { "type": ["string", "null"] },
+        "decision_reasons": { "type": "array", "items": { "type": "string" } },
+        "review_route": { "type": "string", "enum": ["automated", "human_review"] },
+        "reviewer_identity": { "type": ["string", "null"] },
+        "reviewer_decision": {
+          "type": "string",
+          "enum": ["accept", "modify", "reject", "not_required"]
+        },
+        "reviewer_reason": { "type": ["string", "null"] },
+        "final_approved_action": { "type": ["string", "null"] },
+        "human_reviewed": { "type": "boolean" },
+        "review_is_simulated": {
+          "type": "boolean",
+          "const": true,
+          "description": "Always true. No qualified maintenance engineer has reviewed any case in this prototype."
+        },
+
+        "data_quality_status": { "type": "string", "enum": ["pass", "fail", "unknown"] },
+        "data_quality_issues": { "type": "array", "items": { "type": "string" } },
+
+        "model_name": { "type": ["string", "null"] },
+        "model_sha256": { "type": ["string", "null"] },
+        "rule_policy_version": { "type": ["string", "null"] },
+        "rule_policy_approval_status": { "type": ["string", "null"] },
+        "service_version": { "type": ["string", "null"] },
+        "workflow_version": { "type": ["string", "null"] },
+        "service_error": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

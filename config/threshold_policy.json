@@ -1,0 +1,57 @@
+{
+  "policy_version": "0.1.0-DRAFT",
+  "approval_status": "NOT APPROVED — RESEARCH ASSUMPTION ONLY",
+  "approved_by": null,
+  "approved_at_utc": null,
+  "warning": "Every numeric value in this file is an unvalidated research assumption. None is derived from verified business evidence, maintenance contracts, cost data or operator policy. These values MUST NOT be presented in the thesis as operational thresholds until Ranitabh approves them and their provenance is documented. See docs/THRESHOLD_POLICY.md.",
+
+  "decision_basis": {
+    "primary_quantity": "lower_prediction_bound",
+    "rationale": "A safety-conscious rule acts on the pessimistic end of the prediction interval, not the point estimate. Acting on the point estimate accepts roughly a 50 percent chance that true remaining life is shorter than assumed."
+  },
+
+  "rul_priority_boundaries_cycles": {
+    "urgent_below": 30,
+    "plan_maintenance_below": 60,
+    "routine_at_or_above": 60,
+    "provenance": "ASSUMED. Chosen only to create three operationally distinguishable bands for prototype testing."
+  },
+
+  "uncertainty_boundary": {
+    "wide_interval_width_cycles": 60,
+    "provenance": "ASSUMED. Must be revised once Phase 5 reports the empirical average interval width; a threshold below the typical width would escalate everything.",
+    "action_when_wide": "escalate_to_human_review"
+  },
+
+  "data_quality_rules": {
+    "required_fields": [
+      "unit_number",
+      "time_in_cycles",
+      "time_in_cycles_valid",
+      "predictor_completeness"
+    ],
+    "minimum_predictor_completeness": 1.0,
+    "action_on_failure": "data_quality_review"
+  },
+
+  "output_states": [
+    "routine_monitoring",
+    "plan_maintenance",
+    "urgent_human_review",
+    "data_quality_review",
+    "prediction_unavailable"
+  ],
+
+  "human_review_triggers": [
+    "priority is urgent_human_review",
+    "interval width exceeds the uncertainty boundary",
+    "the conformal interval is not yet calibrated",
+    "any data-quality rule fails",
+    "the prediction service returned an error"
+  ],
+
+  "sensitivity_analysis_plan": {
+    "status": "NOT YET EXECUTED",
+    "method": "Vary urgent_below over 20/30/40 cycles and wide_interval_width_cycles over 40/60/80, then report how the distribution of engines across output states changes. Report the proportion of engines whose recommended action is unstable across the grid."
+  }
+}

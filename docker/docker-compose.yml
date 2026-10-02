@@ -1,0 +1,69 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: thesis-hitl-postgres
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - thesis-hitl-network
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: thesis-hitl-n8n
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DB_TYPE: ${DB_TYPE}
+      DB_POSTGRESDB_HOST: ${DB_POSTGRESDB_HOST}
+      DB_POSTGRESDB_PORT: ${DB_POSTGRESDB_PORT}
+      DB_POSTGRESDB_DATABASE: ${DB_POSTGRESDB_DATABASE}
+      DB_POSTGRESDB_USER: ${DB_POSTGRESDB_USER}
+      DB_POSTGRESDB_PASSWORD: ${DB_POSTGRESDB_PASSWORD}
+      N8N_EDITOR_BASE_URL: "http://127.0.0.1:5680"
+      WEBHOOK_URL: "http://127.0.0.1:5680/"
+
+      N8N_HOST: "127.0.0.1"
+      N8N_PORT: ${N8N_PORT}
+      N8N_PROTOCOL: ${N8N_PROTOCOL}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+
+      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE}
+      TZ: ${TZ}
+
+      N8N_SECURE_COOKIE: "false"
+      N8N_RESTRICT_FILE_ACCESS_TO: "/files/outputs"
+
+    ports:
+      - "${N8N_HOST_PORT}:5678"
+
+    volumes:
+      - ./n8n:/home/node/.n8n
+      - ./workflows:/files/workflows
+      - ./data:/files/data
+      - ./outputs:/files/outputs
+      - ./docs:/files/docs
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - thesis-hitl-network
+
+networks:
+  thesis-hitl-network:
+    name: thesis-hitl-network
+    driver: bridge

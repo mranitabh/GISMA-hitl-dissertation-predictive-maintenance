@@ -1,0 +1,370 @@
+{
+  "name": "FD001 Maintenance Prioritisation (research prototype v0.1.0)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fd001-rul",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000001",
+      "name": "1 Receive Engine Reading",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-680, 300],
+      "webhookId": "a1000000-0000-4000-8000-000000000001"
+    },
+    {
+      "parameters": {
+        "jsCode": "// GROUP 1 — INPUT SCHEMA VALIDATION\n// Rejects malformed requests before any model is called.\n// unit_number is carried for traceability only. It is NEVER a predictor.\n\nconst REQUIRED_PREDICTORS = [\n  'time_in_cycles','operational_setting_1','operational_setting_2',\n  'sensor_2','sensor_3','sensor_4','sensor_6','sensor_7','sensor_8',\n  'sensor_9','sensor_11','sensor_12','sensor_13','sensor_14',\n  'sensor_15','sensor_17','sensor_20','sensor_21'\n];\n\nconst out = [];\n\nfor (const item of $input.all()) {\n  const body = item.json.body ?? item.json;\n  const errors = [];\n\n  if (body.unit_number === undefined || !Number.isInteger(body.unit_number) || body.unit_number < 1) {\n    errors.push('unit_number must be an integer of at least 1');\n  }\n\n  for (const field of REQUIRED_PREDICTORS) {\n    const value = body[field];\n    if (value === undefined || value === null) {\n      errors.push(`missing predictor: ${field}`);\n    } else if (typeof value !== 'number' || !Number.isFinite(value)) {\n      errors.push(`predictor is not a finite number: ${field}`);\n    }\n  }\n\n  if (body.time_in_cycles !== undefined && body.time_in_cycles < 1) {\n    errors.push('time_in_cycles must be at least 1');\n  }\n\n  const forbidden = ['rul_uncapped','rul_capped_130'];\n  for (const field of forbidden) {\n    if (body[field] !== undefined) {\n      errors.push(`target leakage: ${field} must not be supplied as an input`);\n    }\n  }\n\n  out.push({\n    json: {\n      valid: errors.length === 0,\n      validation_errors: errors,\n      received_at_utc: new Date().toISOString(),\n      payload: body\n    }\n  });\n}\n\nreturn out;"
+      },
+      "id": "a1000000-0000-4000-8000-000000000002",
+      "name": "2 Validate Input Schema",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "valid-check",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000003",
+      "name": "3 Input Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [-240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/predict",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}",
+        "options": { "timeout": 15000 }
+      },
+      "id": "a1000000-0000-4000-8000-000000000004",
+      "name": "4 Call Local Prediction Service",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-20, 200],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// GROUP 3 — ATTACH UNCERTAINTY AND EXPLANATION\n// The service already returns interval, explanation and rule outcome.\n// This node normalises the shape for routing and audit, and makes the\n// uncalibrated-interval condition explicit rather than silent.\n\nreturn $input.all().map((item) => {\n  const r = item.json;\n  const p = r.prediction ?? {};\n  const d = r.decision ?? {};\n\n  return {\n    json: {\n      request_id: r.request_id,\n      created_at_utc: r.created_at_utc,\n      unit_number: r.engine?.unit_number ?? null,\n      time_in_cycles: r.engine?.time_in_cycles ?? null,\n\n      point_rul: p.point_rul_cycles ?? null,\n      lower_bound: p.lower_bound_cycles ?? null,\n      upper_bound: p.upper_bound_cycles ?? null,\n      interval_width: p.interval_width_cycles ?? null,\n      interval_status: p.interval_status ?? 'NOT_CALIBRATED',\n      interval_is_calibrated: p.interval_status === 'CALIBRATED',\n      confidence_level: p.confidence_level ?? null,\n\n      top_drivers: (r.explanation?.top_drivers ?? []).map((x) => x.feature),\n      explanation_status: r.explanation?.status ?? 'UNKNOWN',\n\n      priority: d.priority ?? 'prediction_unavailable',\n      proposed_action: d.proposed_action ?? null,\n      requires_human_review: d.requires_human_review ?? true,\n      uncertainty_flag: d.uncertainty_flag ?? true,\n      decision_reasons: d.reasons ?? [],\n\n      data_quality_status: r.data_quality?.status ?? 'unknown',\n      data_quality_issues: r.data_quality?.issues ?? [],\n\n      model_name: r.provenance?.model_name ?? null,\n      model_sha256: r.provenance?.model_sha256 ?? null,\n      policy_version: r.provenance?.policy_version ?? null,\n      policy_approval_status: r.provenance?.policy_approval_status ?? null,\n      service_version: r.provenance?.service_version ?? null,\n      workflow_version: '0.1.0-prototype',\n      service_error: r.error ?? null\n    }\n  };\n});"
+      },
+      "id": "a1000000-0000-4000-8000-000000000005",
+      "name": "5 Attach Uncertainty and Explanation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [200, 200]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "typeValidation": "strict", "version": 2 },
+                "conditions": [
+                  {
+                    "id": "r-routine",
+                    "leftValue": "={{ $json.priority }}",
+                    "rightValue": "routine_monitoring",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "routine_monitoring"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "typeValidation": "strict", "version": 2 },
+                "conditions": [
+                  {
+                    "id": "r-plan",
+                    "leftValue": "={{ $json.priority }}",
+                    "rightValue": "plan_maintenance",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "plan_maintenance"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "typeValidation": "strict", "version": 2 },
+                "conditions": [
+                  {
+                    "id": "r-urgent",
+                    "leftValue": "={{ $json.priority }}",
+                    "rightValue": "urgent_human_review",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "urgent_human_review"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "typeValidation": "strict", "version": 2 },
+                "conditions": [
+                  {
+                    "id": "r-dq",
+                    "leftValue": "={{ $json.priority }}",
+                    "rightValue": "data_quality_review",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "data_quality_review"
+            }
+          ]
+        },
+        "options": { "fallbackOutput": "extra", "renameFallbackOutput": "prediction_unavailable" }
+      },
+      "id": "a1000000-0000-4000-8000-000000000006",
+      "name": "6 Route by Priority",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [420, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// AUTOMATED BRANCH — no human review required by the rule layer.\n// The record still states plainly that no human reviewed it.\n\nreturn $input.all().map((item) => ({\n  json: {\n    ...item.json,\n    review_route: 'automated',\n    reviewer_decision: 'not_required',\n    reviewer_identity: null,\n    reviewer_reason: 'The rule layer did not trigger human review.',\n    human_reviewed: false,\n    final_approved_action: item.json.proposed_action,\n    review_note: 'SIMULATED SYSTEM — no engineer examined this case.'\n  }\n}));"
+      },
+      "id": "a1000000-0000-4000-8000-000000000007",
+      "name": "7a Automated Recommendation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 60]
+    },
+    {
+      "parameters": {
+        "resume": "form",
+        "formTitle": "FD001 Maintenance Review (SIMULATED)",
+        "formDescription": "RESEARCH PROTOTYPE. This is a simulated human-review step for an MSc thesis. Thresholds are unapproved research assumptions. Do not use for any real maintenance decision.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Reviewer identifier",
+              "fieldType": "text",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Decision",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  { "option": "accept" },
+                  { "option": "modify" },
+                  { "option": "reject" }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Final approved action",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Reason for decision",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000008",
+      "name": "7b Simulated Human Review",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [660, 320],
+      "webhookId": "a1000000-0000-4000-8000-000000000008"
+    },
+    {
+      "parameters": {
+        "jsCode": "// GROUP 4 — RECORD THE REVIEWER DECISION\n// Merges the form submission back onto the prediction record.\n\nconst upstream = $('5 Attach Uncertainty and Explanation').all();\n\nreturn $input.all().map((item, index) => {\n  const base = upstream[Math.min(index, upstream.length - 1)].json;\n  const form = item.json;\n\n  const decision = (form['Decision'] ?? 'accept').toLowerCase();\n  const finalAction = form['Final approved action'] ?? base.proposed_action;\n\n  return {\n    json: {\n      ...base,\n      review_route: 'human_review',\n      reviewer_decision: decision,\n      reviewer_identity: form['Reviewer identifier'] ?? 'unidentified',\n      reviewer_reason: form['Reason for decision'] ?? null,\n      human_reviewed: true,\n      review_is_simulated: true,\n      final_approved_action: decision === 'reject' ? 'No action approved.' : finalAction,\n      reviewed_at_utc: new Date().toISOString(),\n      review_note: 'SIMULATED HUMAN REVIEW — research prototype. This does not evidence review by a qualified maintenance engineer.'\n    }\n  };\n});"
+      },
+      "id": "a1000000-0000-4000-8000-000000000009",
+      "name": "8 Record Reviewer Decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 320]
+    },
+    {
+      "parameters": {
+        "jsCode": "// GROUP 5 — BUILD THE IMMUTABLE AUDIT RECORD\n// Every field required by the thesis human-review specification.\n\nreturn $input.all().map((item) => {\n  const r = item.json;\n  return {\n    json: {\n      audit_record: {\n        request_id: r.request_id,\n        engine_id: r.unit_number,\n        time_in_cycles: r.time_in_cycles,\n        timestamp_utc: r.created_at_utc,\n        reviewed_at_utc: r.reviewed_at_utc ?? null,\n\n        point_prediction_cycles: r.point_rul,\n        interval_lower_cycles: r.lower_bound,\n        interval_upper_cycles: r.upper_bound,\n        interval_width_cycles: r.interval_width,\n        interval_status: r.interval_status,\n        confidence_level: r.confidence_level,\n\n        risk_category: r.priority,\n        uncertainty_flag: r.uncertainty_flag,\n        top_explanation_drivers: r.top_drivers,\n        explanation_status: r.explanation_status,\n\n        automatically_proposed_action: r.proposed_action,\n        decision_reasons: r.decision_reasons,\n        review_route: r.review_route,\n        reviewer_identity: r.reviewer_identity,\n        reviewer_decision: r.reviewer_decision,\n        reviewer_reason: r.reviewer_reason,\n        final_approved_action: r.final_approved_action,\n        human_reviewed: r.human_reviewed,\n        review_is_simulated: true,\n\n        data_quality_status: r.data_quality_status,\n        data_quality_issues: r.data_quality_issues,\n\n        model_name: r.model_name,\n        model_sha256: r.model_sha256,\n        rule_policy_version: r.policy_version,\n        rule_policy_approval_status: r.policy_approval_status,\n        service_version: r.service_version,\n        workflow_version: r.workflow_version,\n        service_error: r.service_error ?? null\n      }\n    }\n  };\n});"
+      },
+      "id": "a1000000-0000-4000-8000-00000000000a",
+      "name": "9 Build Audit Record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1140, 200]
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "mode": "each",
+        "options": { "fileName": "fd001_audit_record.json" }
+      },
+      "id": "a1000000-0000-4000-8000-00000000000b",
+      "name": "10 Serialise Audit Record",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [1360, 200]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/tmp/fd001_audit/{{ $('9 Build Audit Record').item.json.audit_record.request_id }}.json",
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-00000000000c",
+      "name": "11 Append Local Audit Log",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [1580, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($('9 Build Audit Record').item.json) }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "a1000000-0000-4000-8000-00000000000d",
+      "name": "12 Respond With Recommendation",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1800, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ERROR BRANCH A — INVALID INPUT\n// Fails closed. No recommendation is produced from a malformed record.\n\nreturn $input.all().map((item) => ({\n  json: {\n    status: 'rejected',\n    reason: 'input_schema_validation_failed',\n    validation_errors: item.json.validation_errors,\n    priority: 'data_quality_review',\n    proposed_action: 'No recommendation issued. Correct the input record and resubmit.',\n    requires_human_review: true,\n    workflow_version: '0.1.0-prototype',\n    received_at_utc: item.json.received_at_utc\n  }\n}));"
+      },
+      "id": "a1000000-0000-4000-8000-00000000000e",
+      "name": "E1 Reject Invalid Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-20, 460]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ERROR BRANCH B — PREDICTION SERVICE FAILURE\n// Fails closed. An unavailable model must never silently become\n// 'routine monitoring'.\n\nreturn $input.all().map((item) => ({\n  json: {\n    status: 'service_failure',\n    reason: 'prediction_service_unreachable_or_errored',\n    error_detail: item.json.error ?? item.error?.message ?? 'unknown',\n    priority: 'prediction_unavailable',\n    proposed_action: 'Escalate to an engineer. No automated recommendation is available.',\n    requires_human_review: true,\n    uncertainty_flag: true,\n    workflow_version: '0.1.0-prototype',\n    failed_at_utc: new Date().toISOString()\n  }\n}));"
+      },
+      "id": "a1000000-0000-4000-8000-00000000000f",
+      "name": "E2 Handle Service Failure",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [200, 460]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": { "responseCode": 422 }
+      },
+      "id": "a1000000-0000-4000-8000-000000000010",
+      "name": "E3 Respond With Failure",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [420, 460]
+    }
+  ],
+  "connections": {
+    "1 Receive Engine Reading": {
+      "main": [[{ "node": "2 Validate Input Schema", "type": "main", "index": 0 }]]
+    },
+    "2 Validate Input Schema": {
+      "main": [[{ "node": "3 Input Valid?", "type": "main", "index": 0 }]]
+    },
+    "3 Input Valid?": {
+      "main": [
+        [{ "node": "4 Call Local Prediction Service", "type": "main", "index": 0 }],
+        [{ "node": "E1 Reject Invalid Input", "type": "main", "index": 0 }]
+      ]
+    },
+    "4 Call Local Prediction Service": {
+      "main": [
+        [{ "node": "5 Attach Uncertainty and Explanation", "type": "main", "index": 0 }],
+        [{ "node": "E2 Handle Service Failure", "type": "main", "index": 0 }]
+      ]
+    },
+    "5 Attach Uncertainty and Explanation": {
+      "main": [[{ "node": "6 Route by Priority", "type": "main", "index": 0 }]]
+    },
+    "6 Route by Priority": {
+      "main": [
+        [{ "node": "7a Automated Recommendation", "type": "main", "index": 0 }],
+        [{ "node": "7a Automated Recommendation", "type": "main", "index": 0 }],
+        [{ "node": "7b Simulated Human Review", "type": "main", "index": 0 }],
+        [{ "node": "7b Simulated Human Review", "type": "main", "index": 0 }],
+        [{ "node": "7b Simulated Human Review", "type": "main", "index": 0 }]
+      ]
+    },
+    "7a Automated Recommendation": {
+      "main": [[{ "node": "9 Build Audit Record", "type": "main", "index": 0 }]]
+    },
+    "7b Simulated Human Review": {
+      "main": [[{ "node": "8 Record Reviewer Decision", "type": "main", "index": 0 }]]
+    },
+    "8 Record Reviewer Decision": {
+      "main": [[{ "node": "9 Build Audit Record", "type": "main", "index": 0 }]]
+    },
+    "9 Build Audit Record": {
+      "main": [[{ "node": "10 Serialise Audit Record", "type": "main", "index": 0 }]]
+    },
+    "10 Serialise Audit Record": {
+      "main": [[{ "node": "11 Append Local Audit Log", "type": "main", "index": 0 }]]
+    },
+    "11 Append Local Audit Log": {
+      "main": [[{ "node": "12 Respond With Recommendation", "type": "main", "index": 0 }]]
+    },
+    "E1 Reject Invalid Input": {
+      "main": [[{ "node": "E3 Respond With Failure", "type": "main", "index": 0 }]]
+    },
+    "E2 Handle Service Failure": {
+      "main": [[{ "node": "E3 Respond With Failure", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {},
+  "meta": {
+    "instanceId": "fd001-research-prototype",
+    "description": "MSc thesis research prototype. Thresholds are unapproved research assumptions. Human review is SIMULATED. Not validated for operational use."
+  },
+  "tags": [
+    { "name": "MSc-thesis" },
+    { "name": "research-prototype" },
+    { "name": "FD001" }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local/fd001/request.schema.json",
+  "title": "FD001 RUL prediction request",
+  "description": "One engine-cycle observation. unit_number is carried for traceability only and is never supplied to the model.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "unit_number",
+    "time_in_cycles",
+    "operational_setting_1",
+    "operational_setting_2",
+    "sensor_2",
+    "sensor_3",
+    "sensor_4",
+    "sensor_6",
+    "sensor_7",
+    "sensor_8",
+    "sensor_9",
+    "sensor_11",
+    "sensor_12",
+    "sensor_13",
+    "sensor_14",
+    "sensor_15",
+    "sensor_17",
+    "sensor_20",
+    "sensor_21"
+  ],
+  "properties": {
+    "unit_number": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Engine identifier. IDENTIFIER ONLY — never a predictor."
+    },
+    "time_in_cycles": { "type": "integer", "minimum": 1 },
+    "operational_setting_1": { "type": "number" },
+    "operational_setting_2": { "type": "number" },
+    "sensor_2": { "type": "number" },
+    "sensor_3": { "type": "number" },
+    "sensor_4": { "type": "number" },
+    "sensor_6": { "type": "number" },
+    "sensor_7": { "type": "number" },
+    "sensor_8": { "type": "number" },
+    "sensor_9": { "type": "number" },
+    "sensor_11": { "type": "number" },
+    "sensor_12": { "type": "number" },
+    "sensor_13": { "type": "number" },
+    "sensor_14": { "type": "number" },
+    "sensor_15": { "type": "number" },
+    "sensor_17": { "type": "number" },
+    "sensor_20": { "type": "number" },
+    "sensor_21": { "type": "number" }
+  },
+  "designNotes": {
+    "excludedByDesign": [
+      "operational_setting_3",
+      "sensor_1",
+      "sensor_5",
+      "sensor_10",
+      "sensor_16",
+      "sensor_18",
+      "sensor_19"
+    ],
+    "exclusionReason": "Constant across the 60 model-training engines. Excluded in Phase 3 using the model-training partition only.",
+    "forbiddenFields": ["rul_uncapped", "rul_capped_130"],
+    "forbiddenReason": "Supplying either target would constitute direct target leakage. The validation node rejects requests containing them.",
+    "predictorCount": 18,
+    "predictorOrderIsFixed": true
+  }
+}

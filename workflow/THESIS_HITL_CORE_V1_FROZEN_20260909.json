@@ -1,0 +1,739 @@
+{
+  "name": "THESIS_HITL_CORE_V1",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "481896a0-18d4-4811-92bd-8ce32ca5694e",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e76f6718-a3c2-47ad-a49e-d7bbddab387b",
+              "name": "=request_id",
+              "value": "={{ 'HITL-' + $now.toFormat('yyyyLLdd-HHmmss-SSS') }}",
+              "type": "string"
+            },
+            {
+              "id": "5c879b99-0bc4-426d-b709-7df13eed3664",
+              "name": "asset_id",
+              "value": "FD001_ENGINE_001",
+              "type": "string"
+            },
+            {
+              "id": "f2602329-7477-4f8e-b5f8-b5a3079c8193",
+              "name": "predicted_rul",
+              "value": 18,
+              "type": "number"
+            },
+            {
+              "id": "f97b1c17-278d-4bfb-ba09-85cfe04f631b",
+              "name": "priority",
+              "value": "HIGH",
+              "type": "string"
+            },
+            {
+              "id": "74ebdc5e-82d8-46eb-b7a3-56b239e17f30",
+              "name": "recommendation",
+              "value": "Inspect engine before continued operation",
+              "type": "string"
+            },
+            {
+              "id": "51c238ae-7cdf-4093-95a6-9e5780d1b95d",
+              "name": "status",
+              "value": "PENDING_HUMAN_REVIEW",
+              "type": "string"
+            },
+            {
+              "id": "21547791-1ce3-47a8-966d-1e57449c2182",
+              "name": "explanation",
+              "value": "{   \"source\": \"SHAP\",   \"top_features\": [     {       \"feature\": \"sensor_example_1\",       \"impact\": \"high\"     },     {       \"feature\": \"sensor_example_2\",       \"impact\": \"medium\"     }   ] }",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "d7695423-de90-4321-86c6-65f92501fa89",
+      "name": "01_Create_Test_Maintenance_Request"
+    },
+    {
+      "parameters": {
+        "resume": "form",
+        "formTitle": "Maintenance Decision Review",
+        "formDescription": "={{ \n\"Asset: \" + $json.asset_id +\n\"\\nPredicted RUL: \" + $json.predicted_rul + \" cycles\" +\n\"\\nPriority: \" + $json.priority +\n\"\\nRecommendation: \" + $json.recommendation\n}}",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "human_decision",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "APPROVE"
+                  },
+                  {
+                    "option": "REJECT"
+                  },
+                  {
+                    "option": "MODIFY"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "human_comment",
+              "placeholder": "Add reasoning or comments for this maintenance decision"
+            },
+            {
+              "fieldLabel": "modified_recommendation",
+              "placeholder": "Enter a revised maintenance recommendation if MODIFY is selected"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "1057d9eb-1c44-41a3-8ea3-60620f062154",
+      "name": "03_Human_Review",
+      "webhookId": "c1191779-43f7-4e47-a2cb-01cca6a0e4ed"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO hitl_requests (\n    request_id,\n    asset_id,\n    predicted_rul,\n    priority,\n    recommendation,\n    explanation,\n    status\n)\nVALUES (\n    $1,\n    $2,\n    $3,\n    $4,\n    $5,\n    $6::jsonb,\n    $7\n)\nRETURNING *;",
+        "options": {
+          "queryReplacement": "={{ [\n  $json.request_id,\n  $json.asset_id,\n  $json.predicted_rul,\n  $json.priority,\n  $json.recommendation,\n  JSON.stringify($json.explanation),\n  $json.status\n] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        416,
+        0
+      ],
+      "id": "aa72aae1-0dfc-4a8b-89c2-19c1cc0854c2",
+      "name": "02_Insert_HITL_Request",
+      "credentials": {
+        "postgres": {
+          "id": "Y1YOLXdodnar34kD",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.human_decision}}",
+                    "rightValue": "APPROVE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "5f66b180-1f9f-4aad-b818-bff3aa068417"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "62f16010-f4cf-41c5-93b9-f6bcc297a39e",
+                    "leftValue": "={{$json.human_decision}}",
+                    "rightValue": "REJECT",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "cfb2f842-60af-4283-8f69-36098d201d7a",
+                    "leftValue": "={{$json.human_decision}}",
+                    "rightValue": "MODIFY",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        832,
+        0
+      ],
+      "id": "f0250f8d-6570-46d7-971f-304abe615fe4",
+      "name": "04_Decision_Router"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0d3bfea2-e399-47dd-92c3-8564361518c9",
+              "leftValue": "={{$json.modified_recommendation}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1040,
+        368
+      ],
+      "id": "ec206395-45f2-42d8-9465-22245130daf0",
+      "name": "05C_Modify_Validation"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE hitl_requests\nSET\n    status = 'MODIFIED',\n    human_decision = $1,\n    human_comment = $2,\n    modified_recommendation = $3,\n    reviewed_at = CURRENT_TIMESTAMP,\n    completed_at = CURRENT_TIMESTAMP\nWHERE request_id = $4\nRETURNING *;",
+        "options": {
+          "queryReplacement": "={{ [\n  $json.human_decision,\n  $json.human_comment,\n  $json.modified_recommendation,\n  $('02_Insert_HITL_Request').item.json.request_id\n] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1344,
+        256
+      ],
+      "id": "6bac1dc1-a615-4196-a330-a7b9f058f146",
+      "name": "05D_Modify_Update",
+      "credentials": {
+        "postgres": {
+          "id": "Y1YOLXdodnar34kD",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b09b81f1-21e6-46f6-aeb3-3d0811f0ff15",
+              "name": "status",
+              "value": "INVALID_MODIFICATION",
+              "type": "string"
+            },
+            {
+              "id": "d75ab0eb-032f-4ec2-85fb-9b565c599421",
+              "name": "reason",
+              "value": "MODIFY was selected but no modified recommendation was provided.",
+              "type": "string"
+            },
+            {
+              "id": "0d6fa371-f1bc-4c4f-a0e6-1998f5aac352",
+              "name": "requires_re_review",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1344,
+        496
+      ],
+      "id": "766215ef-ad11-4225-a5b1-67202324683a",
+      "name": "05E_Invalid_Modify_Response"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE hitl_requests\nSET\n    status = 'INVALID_MODIFICATION',\n    human_decision = 'MODIFY',\n    human_comment = $1,\n    modified_recommendation = NULL,\n    reviewed_at = CURRENT_TIMESTAMP,\n    completed_at = NULL\nWHERE request_id = $2\nRETURNING *;",
+        "options": {
+          "queryReplacement": "={{ [\n  $('03_Human_Review').item.json.human_comment || 'MODIFY selected without a valid revised recommendation.',\n  $('02_Insert_HITL_Request').item.json.request_id\n] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1616,
+        496
+      ],
+      "id": "55724670-d5c0-468d-8533-78c24b8cc3fd",
+      "name": "05F_Invalid_Modify_Update",
+      "credentials": {
+        "postgres": {
+          "id": "Y1YOLXdodnar34kD",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE hitl_requests\nSET\n    status = 'APPROVED',\n    human_decision = $1,\n    human_comment = $2,\n    modified_recommendation = NULL,\n    reviewed_at = CURRENT_TIMESTAMP,\n    completed_at = CURRENT_TIMESTAMP\nWHERE request_id = $3\nRETURNING *;",
+        "options": {
+          "queryReplacement": "={{ [\n  $json.human_decision,\n  $json.human_comment,\n  $('02_Insert_HITL_Request').item.json.request_id\n] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1040,
+        -336
+      ],
+      "id": "db32fd8c-1ea7-415b-9231-bec6371a7abe",
+      "name": "05A_Approve_Update",
+      "credentials": {
+        "postgres": {
+          "id": "Y1YOLXdodnar34kD",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE hitl_requests\nSET\n    status = 'REJECTED',\n    human_decision = $1,\n    human_comment = $2,\n    modified_recommendation = NULL,\n    reviewed_at = CURRENT_TIMESTAMP,\n    completed_at = CURRENT_TIMESTAMP\nWHERE request_id = $3\nRETURNING *;",
+        "options": {
+          "queryReplacement": "={{ [\n  $json.human_decision,\n  $json.human_comment,\n  $('02_Insert_HITL_Request').item.json.request_id\n] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1088,
+        0
+      ],
+      "id": "be01e931-2994-4655-bfe4-bec843e0b85d",
+      "name": "05B_Reject_Update",
+      "credentials": {
+        "postgres": {
+          "id": "Y1YOLXdodnar34kD",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n    id,\n    request_id,\n    asset_id,\n    predicted_rul,\n    priority,\n    recommendation,\n    explanation,\n    status,\n    human_decision,\n    human_comment,\n    modified_recommendation,\n    created_at,\n    reviewed_at,\n    completed_at\nFROM hitl_requests\nWHERE request_id = $1;",
+        "options": {
+          "queryReplacement": "={{ [\n  $('02_Insert_HITL_Request').item.json.request_id\n] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1600,
+        0
+      ],
+      "id": "7642ed35-bac9-47ab-a469-ff0d00084251",
+      "name": "06_Final_Audit_Record",
+      "credentials": {
+        "postgres": {
+          "id": "Y1YOLXdodnar34kD",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "06c5252b-b83a-476c-a337-496416ae60aa",
+              "name": "=request_id",
+              "value": "={{$json.request_id}}",
+              "type": "string"
+            },
+            {
+              "id": "c1f07f2f-0276-4df0-a91e-9a3357b20519",
+              "name": "=asset_id",
+              "value": "={{$json.asset_id}}",
+              "type": "string"
+            },
+            {
+              "id": "18fb62f0-7ae5-434f-aa8f-5d83a1eec6ca",
+              "name": "=predicted_rul",
+              "value": "={{$json.predicted_rul}}",
+              "type": "number"
+            },
+            {
+              "id": "6f3e7293-7bd0-4b01-bb3b-faf1c97762b1",
+              "name": "=priority",
+              "value": "={{$json.priority}}",
+              "type": "string"
+            },
+            {
+              "id": "8c5e41b1-9f4f-481b-af20-b54cec4fa53f",
+              "name": "=original_recommendation",
+              "value": "={{$json.recommendation}}",
+              "type": "string"
+            },
+            {
+              "id": "cd91b39c-b393-4f72-84b7-94fececf2ab4",
+              "name": "=human_decision",
+              "value": "={{$json.human_decision}}",
+              "type": "string"
+            },
+            {
+              "id": "035b19af-9430-43fe-87d6-36fca42fd5ea",
+              "name": "=human_comment",
+              "value": "={{$json.human_comment}}",
+              "type": "string"
+            },
+            {
+              "id": "7e444276-c986-46a4-8c09-48d0405ccb16",
+              "name": "=final_recommendation",
+              "value": "={{\n  $json.status === 'MODIFIED'\n    ? $json.modified_recommendation\n    : $json.status === 'APPROVED'\n      ? $json.recommendation\n      : ''\n}}",
+              "type": "string"
+            },
+            {
+              "id": "f0e707d3-f4b7-495d-bf1f-87f3a2cef47f",
+              "name": "=final_status",
+              "value": "={{$json.status}}",
+              "type": "string"
+            },
+            {
+              "id": "d7e3089e-91d8-49a0-afaf-76fd70f12d81",
+              "name": "=human_override",
+              "value": "={{ $json.human_decision === 'APPROVE' ? 'NO' : 'YES' }}",
+              "type": "string"
+            },
+            {
+              "id": "952b037e-13d8-4794-8dcc-dd54b5a34655",
+              "name": "=decision_source",
+              "value": "={{\n  $json.status === 'APPROVED'\n    ? 'AI_RECOMMENDATION_APPROVED_BY_HUMAN'\n    : $json.status === 'MODIFIED'\n      ? 'HUMAN_MODIFIED_RECOMMENDATION'\n      : $json.status === 'REJECTED'\n        ? 'AI_RECOMMENDATION_REJECTED_BY_HUMAN'\n        : 'UNRESOLVED'\n}}",
+              "type": "string"
+            },
+            {
+              "id": "87594c29-1936-408e-8111-1100396bedbe",
+              "name": "=xai_explanation",
+              "value": "={{$json.explanation}}",
+              "type": "object"
+            },
+            {
+              "id": "c3e069b6-b1a8-4d92-b7d0-a972fec65129",
+              "name": "=review_duration_seconds",
+              "value": "={{ Math.round((new Date($json.reviewed_at).getTime() - new Date($json.created_at).getTime()) / 1000) }}",
+              "type": "number"
+            },
+            {
+              "id": "142b445c-9c73-43da-bcc7-6c67e9a05aab",
+              "name": "=created_at",
+              "value": "={{$json.created_at}}",
+              "type": "string"
+            },
+            {
+              "id": "dea8b592-378c-408b-978f-cdcbad977f00",
+              "name": "=reviewed_at",
+              "value": "={{$json.reviewed_at}}",
+              "type": "string"
+            },
+            {
+              "id": "15c4c4f3-ef59-49fe-8d83-6c157e822f96",
+              "name": "=completed_at",
+              "value": "={{$json.completed_at}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1808,
+        0
+      ],
+      "id": "cb492214-5473-43bf-a1a0-9024567f5e5b",
+      "name": "07_Build_Final_Decision"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {
+          "fileName": "={{ 'HITL_AUDIT_' + $json.request_id + '.json' }}"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2016,
+        0
+      ],
+      "id": "5e4dcfad-e079-4b44-9fbd-3905cb7f82aa",
+      "name": "08_Convert_Audit_to_JSON"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{ '/files/outputs/' + $binary.data.fileName }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        2224,
+        0
+      ],
+      "id": "d4f8cd89-e9da-4860-ae6e-5587273108ff",
+      "name": "09_Write_Audit_JSON"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "01_Create_Test_Maintenance_Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "01_Create_Test_Maintenance_Request": {
+      "main": [
+        [
+          {
+            "node": "02_Insert_HITL_Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "02_Insert_HITL_Request": {
+      "main": [
+        [
+          {
+            "node": "03_Human_Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "03_Human_Review": {
+      "main": [
+        [
+          {
+            "node": "04_Decision_Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "04_Decision_Router": {
+      "main": [
+        [
+          {
+            "node": "05A_Approve_Update",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "05B_Reject_Update",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "05C_Modify_Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "05C_Modify_Validation": {
+      "main": [
+        [
+          {
+            "node": "05D_Modify_Update",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "05E_Invalid_Modify_Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "05E_Invalid_Modify_Response": {
+      "main": [
+        [
+          {
+            "node": "05F_Invalid_Modify_Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "05A_Approve_Update": {
+      "main": [
+        [
+          {
+            "node": "06_Final_Audit_Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "05B_Reject_Update": {
+      "main": [
+        [
+          {
+            "node": "06_Final_Audit_Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "05D_Modify_Update": {
+      "main": [
+        [
+          {
+            "node": "06_Final_Audit_Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "06_Final_Audit_Record": {
+      "main": [
+        [
+          {
+            "node": "07_Build_Final_Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "07_Build_Final_Decision": {
+      "main": [
+        [
+          {
+            "node": "08_Convert_Audit_to_JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "08_Convert_Audit_to_JSON": {
+      "main": [
+        [
+          {
+            "node": "09_Write_Audit_JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "089e9e14-cec5-4a18-a999-97bb481084d7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4771a3217caf1b6063a053e45964dbf494bd5c30a76eafd0d48f8905f1f1592b"
+  },
+  "nodeGroups": [],
+  "id": "taE3aLB5yHE3EEBt",
+  "tags": []
+}
