@@ -1,6 +1,6 @@
 # Timed Presenter Script — MSc Viva (10 minutes)
 
-**Ranitabh Mallick** · GISMA University of Applied Sciences  
+**Ranitabh Mallick** · Supervisor: Dr Hiba Khalid · GISMA University of Applied Sciences  
 *An Uncertainty-Aware, Explainable and Human-Reviewed Framework for RUL-Based Maintenance Prioritisation*
 
 ---
@@ -49,7 +49,7 @@ The dataset is 100 simulated turbofan engines under one operating condition with
 
 ## Slide 5 — Model Comparison and Selection (2:05–2:55)
 
-Four candidates compared with engine-level grouped cross-validation. The key finding: Random Forest and the naive rule were practically equivalent — just 0.077 difference. The predeclared PHM penalty tie-break selected Random Forest because it penalises late predictions more steeply. I am not claiming a dramatic accuracy advantage — the model's value is the structure it enables.
+Four candidates compared with engine-level grouped cross-validation. Random Forest 29.479, naive 29.556, XGBoost 31.156, Ridge 31.516 mean engine RMSE. Random Forest and the naive rule were practically equivalent — just 0.077 difference — but the mean PHM penalty was 83.67 versus 156.44. The predeclared PHM penalty tie-break selected Random Forest because it penalises late predictions more steeply. I am not claiming a dramatic accuracy advantage — the model's value is the structure it enables.
 
 **Point to:** Comparison table (highlight RF row); selection policy box  
 **Denominator:** 20 validation engines  
@@ -82,7 +82,7 @@ The official results: MAE 18.88 cycles, RMSE 25.73, and importantly a positive b
 
 ## Slide 8 — Ablation Studies (4:40–5:15)
 
-Two post-closure ablations. Feature: removing age increased RMSE 24.5% — age is the strongest predictor. Removing sensors 9 and 14 reduced RMSE by 4%, suggesting some channels may add noise. Conformal: row-level and engine-mean scores halved the width but covered only 8 of 20 entire trajectories. The trade-off: 45% narrower intervals for only 40% trajectory coverage.
+Two post-closure ablations. Feature: removing age increased RMSE 24.5% — age is the strongest predictor. Removing the two core-speed channels, sensors 9 and 14, reduced pooled RMSE from 33.07 to 31.76, about 4% — but that reuses validation engines, so it is a hypothesis, not a new model. Conformal: row-level and engine-mean scores narrowed mean width by 42–45% but fully covered only 8 of 20 validation trajectories and 96 of 100 endpoints.
 
 **Point to:** Both tables side by side; trade-off highlight  
 **Denominator:** 60 modelling + 20 validation engines  
@@ -93,7 +93,7 @@ Two post-closure ablations. Feature: removing age increased RMSE 24.5% — age i
 
 ## Slide 9 — SHAP Explainability (5:15–5:55)
 
-TreeSHAP decomposed all 100 endpoint predictions. Engine age ranked first, followed by physically plausible HPC pressure and temperature channels. For Engine 41 — truly critical but triaged as MEDIUM — core-speed contributions counteracted degradation signals. This helps audit why the model erred, but I want to be clear: SHAP supports numerical reconstruction, not physical causation.
+TreeSHAP decomposed all 100 endpoint predictions. Engine age ranked first, followed by physically plausible HPC pressure and temperature channels. Engine 41 had 18 cycles left but was predicted at 60 — so only MEDIUM. Starting from the 107.84 baseline, age took off 29.2 cycles, T50 11.5 and phi 7.9, but core speed added 4.3 back. Engine 18 shows the same pattern. This helps audit why the model erred, but I want to be clear: SHAP supports numerical reconstruction, not physical causation.
 
 **Point to:** Importance bars; Engine 41 case; caveat box  
 **Denominator:** 100 endpoints; baseline 107.84 cycles  
@@ -145,3 +145,7 @@ Press right arrow to access backup slides covering:
 - B6: n8n prototype topology and audit record fields
 - B7: Standards and frameworks (design references)
 - B8: Complete limitations table
+
+## Presenter controls (HTML version)
+
+→ / Space: next reveal or slide · ← : previous · Home/End · N: notes · P: pause motion and show all reveals (static mode) · F: fullscreen · click "Backup ↗" in a footer to jump; B or Backspace returns to the main slide.
