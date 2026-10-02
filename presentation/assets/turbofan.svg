@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" id="e1" class="engine-svg" role="img" aria-label="Illustrative turbofan schematic, not a validated engine simulation">
+<defs>
+  <linearGradient id="e1-cas" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#E9F4F8"/><stop offset="0.5" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E2ECF2"/>
+  </linearGradient>
+  <linearGradient id="e1-edge" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#00A6C8" stop-opacity="0.95"/><stop offset="0.6" stop-color="#00A6C8" stop-opacity="0.35"/><stop offset="1" stop-color="#00A6C8" stop-opacity="0"/>
+  </linearGradient>
+  <radialGradient id="e1-fan" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0" stop-color="#FFFFFF"/><stop offset="0.75" stop-color="#EEF6FA"/><stop offset="1" stop-color="#D3E6EE"/>
+  </radialGradient>
+  <filter id="e1-blur" x="-20%" y="-200%" width="140%" height="500%"><feGaussianBlur stdDeviation="9"/></filter>
+  <filter id="e1-glow" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<style>
+  #e1 .c{fill:none;stroke:#102A43;stroke-width:2;stroke-linejoin:round}
+  #e1 .t{fill:none;stroke:#627D98;stroke-width:1.2}
+  #e1 .st{stroke:#486581;fill:none;stroke-linecap:round}
+  #e1 .blade{fill:#FFFFFF;stroke:#486581;stroke-width:1.1}
+  #e1 .lead{stroke:#9FB3C8;stroke-width:1;stroke-dasharray:3 4}
+  #e1 .zl{font:600 17px Aptos,'Segoe UI','Liberation Sans',Arial,sans-serif;fill:#627D98;letter-spacing:1.5px}
+  #e1 .cap{font:italic 16px Aptos,'Segoe UI','Liberation Sans',Arial,sans-serif;fill:#627D98}
+</style>
+<ellipse cx="640" cy="446" rx="470" ry="14" fill="#102A43" opacity="0.10" filter="url(#e1-blur)"/>
+<line x1="70" y1="250" x2="1170" y2="250" class="t" stroke-dasharray="14 6 3 6"/>
+<!-- nacelle (outer casing), upper and lower bands -->
+<path d="M226,88 Q200,80 206,64 C330,42 640,52 880,98 L985,122 L972,140 L870,124 C640,86 360,78 226,88 Z" fill="url(#e1-cas)" class="c"/>
+<path d="M226,412 Q200,420 206,436 C330,458 640,448 880,402 L985,378 L972,360 L870,376 C640,414 360,422 226,412 Z" fill="url(#e1-cas)" class="c"/>
+<path d="M206,64 C330,42 640,52 880,98 L985,122" fill="none" stroke="url(#e1-edge)" stroke-width="4" filter="url(#e1-glow)"/>
+<!-- core cowl: filled body, open splitter at the front and open exit at the rear -->
+<path d="M300,146 C420,132 700,140 860,166 L1030,198 L1030,302 L860,334 C700,360 420,368 300,354 Z" fill="#FFFFFF" fill-opacity="0.82" stroke="none"/>
+<path d="M292,150 Q296,142 304,145 C420,132 700,140 860,166 L1030,198" class="c"/>
+<path d="M292,350 Q296,358 304,355 C420,368 700,360 860,334 L1030,302" class="c"/>
+<path d="M304,145 C420,132 700,140 860,166 L1030,198" fill="none" stroke="#00A6C8" stroke-opacity="0.45" stroke-width="2.5"/>
+<!-- compressor, combustor and turbine zones -->
+<line x1="330" y1="158" x2="330" y2="233" class="st" stroke-width="2.4"/><line x1="330" y1="267" x2="330" y2="342" class="st" stroke-width="2.4"/><line x1="354" y1="162" x2="354" y2="233" class="st" stroke-width="1.4"/><line x1="354" y1="267" x2="354" y2="338" class="st" stroke-width="1.4"/><line x1="378" y1="166" x2="378" y2="233" class="st" stroke-width="2.4"/><line x1="378" y1="267" x2="378" y2="334" class="st" stroke-width="2.4"/><line x1="402" y1="170" x2="402" y2="233" class="st" stroke-width="1.4"/><line x1="402" y1="267" x2="402" y2="330" class="st" stroke-width="1.4"/>
+<line x1="432" y1="178" x2="432" y2="233" class="st" stroke-width="2.4"/><line x1="432" y1="267" x2="432" y2="322" class="st" stroke-width="2.4"/><line x1="454.3333333333333" y1="181.66666666666669" x2="454.3333333333333" y2="233" class="st" stroke-width="1.4"/><line x1="454.3333333333333" y1="267" x2="454.3333333333333" y2="318.3333333333333" class="st" stroke-width="1.4"/><line x1="476.6666666666667" y1="185.33333333333331" x2="476.6666666666667" y2="233" class="st" stroke-width="2.4"/><line x1="476.6666666666667" y1="267" x2="476.6666666666667" y2="314.6666666666667" class="st" stroke-width="2.4"/><line x1="499" y1="189" x2="499" y2="233" class="st" stroke-width="1.4"/><line x1="499" y1="267" x2="499" y2="311" class="st" stroke-width="1.4"/><line x1="521.3333333333334" y1="192.66666666666666" x2="521.3333333333334" y2="233" class="st" stroke-width="2.4"/><line x1="521.3333333333334" y1="267" x2="521.3333333333334" y2="307.3333333333333" class="st" stroke-width="2.4"/><line x1="543.6666666666666" y1="196.33333333333331" x2="543.6666666666666" y2="233" class="st" stroke-width="1.4"/><line x1="543.6666666666666" y1="267" x2="543.6666666666666" y2="303.6666666666667" class="st" stroke-width="1.4"/><line x1="566" y1="200" x2="566" y2="233" class="st" stroke-width="2.4"/><line x1="566" y1="267" x2="566" y2="300" class="st" stroke-width="2.4"/>
+<rect x="588" y="184" width="78" height="34" rx="16" fill="#F2F6F9" stroke="#486581" stroke-width="1.6"/>
+<rect x="588" y="282" width="78" height="34" rx="16" fill="#F2F6F9" stroke="#486581" stroke-width="1.6"/>
+<line x1="690" y1="196" x2="690" y2="233" class="st" stroke-width="2.4"/><line x1="690" y1="267" x2="690" y2="304" class="st" stroke-width="2.4"/><line x1="726" y1="192" x2="726" y2="233" class="st" stroke-width="1.4"/><line x1="726" y1="267" x2="726" y2="308" class="st" stroke-width="1.4"/>
+<line x1="752" y1="186" x2="752" y2="233" class="st" stroke-width="2.4"/><line x1="752" y1="267" x2="752" y2="314" class="st" stroke-width="2.4"/><line x1="783.3333333333334" y1="180" x2="783.3333333333334" y2="233" class="st" stroke-width="1.4"/><line x1="783.3333333333334" y1="267" x2="783.3333333333334" y2="320" class="st" stroke-width="1.4"/><line x1="814.6666666666666" y1="174" x2="814.6666666666666" y2="233" class="st" stroke-width="2.4"/><line x1="814.6666666666666" y1="267" x2="814.6666666666666" y2="326" class="st" stroke-width="2.4"/><line x1="846" y1="168" x2="846" y2="233" class="st" stroke-width="1.4"/><line x1="846" y1="267" x2="846" y2="332" class="st" stroke-width="1.4"/>
+<!-- shafts: HP spool and LP shaft -->
+<rect x="430" y="235" width="300" height="30" rx="4" fill="#F7FAFC" stroke="#627D98" stroke-width="1.4"/>
+<rect x="232" y="244" width="830" height="12" rx="6" fill="#E3EEF4" stroke="#102A43" stroke-width="1.4"/>
+<!-- exhaust cone -->
+<path d="M860,206 C960,216 1060,238 1110,250 C1060,262 960,284 860,294 Z" fill="#FFFFFF" class="c"/>
+<!-- front fan (perspective disc) -->
+<ellipse cx="226" cy="250" rx="50" ry="180" fill="url(#e1-fan)" class="c"/>
+<g transform="translate(226 250) scale(0.27 1)"><g class="fan-rotor"><path d="M52.0,0.0 Q116.5,18.8 168.1,52.0 L162.1,68.5 Q112.7,34.9 51.5,7.3 Z" class="blade"/><path d="M49.9,14.7 Q106.5,50.9 146.7,97.3 L136.2,111.4 Q98.3,65.2 47.4,21.5 Z" class="blade"/><path d="M43.7,28.1 Q87.8,78.8 113.3,134.7 L99.3,145.3 Q76.0,90.3 39.4,33.9 Z" class="blade"/><path d="M34.1,39.3 Q62.1,100.4 70.8,161.1 L54.4,167.4 Q47.5,108.0 28.2,43.7 Z" class="blade"/><path d="M21.6,47.3 Q31.3,113.8 22.5,174.6 L5.0,175.9 Q15.1,117.0 14.8,49.9 Z" class="blade"/><path d="M7.4,51.5 Q-2.0,118.0 -27.6,173.8 L-44.8,170.2 Q-18.5,116.5 0.1,52.0 Z" class="blade"/><path d="M-7.4,51.5 Q-35.2,112.6 -75.4,159.0 L-90.9,150.7 Q-50.6,106.6 -14.5,49.9 Z" class="blade"/><path d="M-21.6,47.3 Q-65.5,98.2 -117.2,131.3 L-129.7,119.0 Q-78.5,88.1 -28.0,43.8 Z" class="blade"/><path d="M-34.1,39.3 Q-90.5,75.7 -149.4,93.0 L-158.0,77.6 Q-100.2,62.4 -39.2,34.2 Z" class="blade"/><path d="M-43.7,28.1 Q-108.2,47.2 -169.6,47.1 L-173.4,30.0 Q-113.7,31.6 -47.2,21.7 Z" class="blade"/><path d="M-49.9,14.7 Q-117.1,14.8 -176.0,-2.5 L-174.8,-20.1 Q-118.0,-1.7 -51.4,7.5 Z" class="blade"/><path d="M-52.0,0.0 Q-116.5,-18.8 -168.1,-52.0 L-162.1,-68.5 Q-112.7,-34.9 -51.5,-7.3 Z" class="blade"/><path d="M-49.9,-14.7 Q-106.5,-50.9 -146.7,-97.3 L-136.2,-111.4 Q-98.3,-65.2 -47.4,-21.5 Z" class="blade"/><path d="M-43.7,-28.1 Q-87.8,-78.8 -113.3,-134.7 L-99.3,-145.3 Q-76.0,-90.3 -39.4,-33.9 Z" class="blade"/><path d="M-34.1,-39.3 Q-62.1,-100.4 -70.8,-161.1 L-54.4,-167.4 Q-47.5,-108.0 -28.2,-43.7 Z" class="blade"/><path d="M-21.6,-47.3 Q-31.3,-113.8 -22.5,-174.6 L-5.0,-175.9 Q-15.1,-117.0 -14.8,-49.9 Z" class="blade"/><path d="M-7.4,-51.5 Q2.0,-118.0 27.6,-173.8 L44.8,-170.2 Q18.5,-116.5 -0.1,-52.0 Z" class="blade"/><path d="M7.4,-51.5 Q35.2,-112.6 75.4,-159.0 L90.9,-150.7 Q50.6,-106.6 14.5,-49.9 Z" class="blade"/><path d="M21.6,-47.3 Q65.5,-98.2 117.2,-131.3 L129.7,-119.0 Q78.5,-88.1 28.0,-43.8 Z" class="blade"/><path d="M34.1,-39.3 Q90.5,-75.7 149.4,-93.0 L158.0,-77.6 Q100.2,-62.4 39.2,-34.2 Z" class="blade"/><path d="M43.7,-28.1 Q108.2,-47.2 169.6,-47.1 L173.4,-30.0 Q113.7,-31.6 47.2,-21.7 Z" class="blade"/><path d="M49.9,-14.7 Q117.1,-14.8 176.0,2.5 L174.8,20.1 Q118.0,1.7 51.4,-7.5 Z" class="blade"/><circle r="50" fill="#FFFFFF" stroke="#102A43" stroke-width="3"/></g></g>
+<ellipse cx="226" cy="250" rx="50" ry="180" fill="none" stroke="#00A6C8" stroke-opacity="0.55" stroke-width="2.5"/>
+<path d="M150,250 C158,220 190,202 226,200 L226,300 C190,298 158,280 150,250 Z" fill="#FFFFFF" class="c"/>
+<line x1="226" y1="370" x2="226" y2="456" class="lead"/><text x="226" y="478" class="zl" text-anchor="middle">FAN</text><line x1="366" y1="370" x2="366" y2="456" class="lead"/><text x="366" y="478" class="zl" text-anchor="middle">LPC</text><line x1="500" y1="370" x2="500" y2="456" class="lead"/><text x="500" y="478" class="zl" text-anchor="middle">HPC</text><line x1="627" y1="370" x2="627" y2="456" class="lead"/><text x="604" y="478" class="zl" text-anchor="middle">COMBUSTOR</text><line x1="708" y1="370" x2="708" y2="456" class="lead"/><text x="724" y="478" class="zl" text-anchor="middle">HPT</text><line x1="800" y1="370" x2="800" y2="456" class="lead"/><text x="800" y="478" class="zl" text-anchor="middle">LPT</text><line x1="1000" y1="370" x2="1000" y2="456" class="lead"/><text x="1000" y="478" class="zl" text-anchor="middle">NOZZLE</text>
+</svg>
